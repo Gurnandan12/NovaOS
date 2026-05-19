@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NovaOS — Virtual Operating System</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- LOCK SCREEN -->
+    <div id="lock-screen" class="lock-screen">
+        <div class="lock-overlay"></div>
+        <div class="lock-content">
+            <div class="lock-avatar-wrap">
+                <div class="lock-avatar">N</div>
+            </div>
+            <div class="lock-user">
+                <h1>Nova User</h1>
+                <p>Ready to explore?</p>
+            </div>
+            <div class="lock-input-group">
+                <input type="password" id="login-password" placeholder="Password (nova)" autofocus>
+                <div class="lock-btns">
+                    <button id="login-btn" class="lock-btn lock-btn-primary">Sign In</button>
+                </div>
+                <p style="font-size: 0.75rem; color: var(--text3); margin-top: 8px; cursor: pointer;">Forgot password?</p>
+            </div>
+        </div>
+
+        <div class="lock-system-btns">
+            <button class="sys-icon-btn" onclick="System.shutdown()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                <span>Power</span>
+            </button>
+            <button class="sys-icon-btn" onclick="System.restart()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                <span>Restart</span>
+            </button>
+            <button class="sys-icon-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                <span>Sleep</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- DESKTOP ENVIRONMENT -->
+    <div id="desktop" class="desktop">
+        <div id="desktop-main" class="desktop-main">
+            <!-- Icons injected via JS -->
+            <div class="desktop-icons" id="desktop-icons"></div>
+            
+            <!-- Window container -->
+            <div id="window-container"></div>
+            
+            <!-- Selection Box -->
+            <div id="selection-box" class="selection-box hidden"></div>
+        </div>
+
+        <!-- Global Search Overlay -->
+        <div class="search-overlay" id="search-overlay">
+            <div class="search-container">
+                <div class="search-input-wrap">
+                    <svg viewBox="0 0 24 24" width="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="global-search-input" placeholder="Search apps, files, or settings..." autocomplete="off">
+                    <div class="search-hint">ESC to close</div>
+                </div>
+                <div class="search-results" id="search-results"></div>
+            </div>
+        </div>
+
+        <!-- TASKBAR -->
+        <div class="taskbar">
+            <div class="taskbar-left">
+                <div class="taskbar-icon" id="start-menu-btn" title="Start Menu">
+                    <svg viewBox="0 0 24 24" fill="var(--accent)"><circle cx="12" cy="12" r="10"/></svg>
+                </div>
+                <div class="taskbar-icon" id="taskbar-search-btn" title="Search (Ctrl+K)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </div>
+            </div>
+
+            <!-- Start Menu Overlay -->
+            <div class="start-menu" id="start-menu">
+                <div class="start-menu-content">
+                    <div class="start-section-title">Pinned Apps</div>
+                    <div class="start-apps-grid" id="start-apps-grid">
+                        <!-- Apps injected here -->
+                    </div>
+                    <div class="start-footer">
+                        <div class="user-profile">
+                            <div class="user-avatar">👤</div>
+                            <div class="user-info">
+                                <div class="user-name">Nova User</div>
+                                <div class="user-status">Online</div>
+                            </div>
+                        </div>
+                        <button class="power-btn" onclick="System.shutdown()">
+                            <svg viewBox="0 0 24 24" width="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="taskbar-center" id="running-apps">
+                <!-- App icons injected here -->
+            </div>
+
+            <div class="taskbar-right">
+                <div class="systray" id="systray">
+                    <div class="systray-icons">
+                        <div id="tray-wifi" title="WiFi Status">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                        </div>
+                        <div id="tray-battery" title="Battery Status" style="display: flex; align-items: center; gap: 4px;">
+                            <span id="tray-batt-val" style="font-size: 0.7rem; font-weight: 600;">--%</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="13" x2="23" y2="11"/></svg>
+                        </div>
+                    </div>
+                    <div class="systray-time">
+                        <span id="clock-time">00:00</span>
+                        <span id="clock-date">Jan 01</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Popup -->
+            <div class="systray-popup" id="systray-popup">
+                <div style="font-weight: 700; margin-bottom: 10px;">Quick Settings</div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>WiFi</span>
+                        <span id="pop-wifi-status" style="color: var(--accent);">Connected</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Battery</span>
+                        <span id="pop-batt-status">--% (Checking...)</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Uptime</span>
+                        <span id="uptime-val">0m</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTEXT MENU -->
+    <div id="context-menu" class="context-menu">
+        <div class="ctx-item" data-action="refresh">Refresh</div>
+        <div class="ctx-sep"></div>
+        <div class="ctx-item" data-action="wallpaper">Change Wallpaper</div>
+        <div class="ctx-item" data-action="openTerminal">Open Terminal</div>
+        <div class="ctx-sep"></div>
+        <div class="ctx-item" data-action="settings">Settings</div>
+    </div>
+
+    <!-- AUDIO ELEMENTS -->
+    <audio id="sfx-startup" src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3"></audio>
+    <audio id="sfx-notif" src="https://assets.mixkit.co/sfx/preview/mixkit-modern-technology-select-3124.mp3"></audio>
+
+    <!-- SCRIPTS -->
+    <script src="utils.js"></script>
+    <script src="fileSystem.js"></script>
+    <script src="windowManager.js"></script>
+    <script src="apps.js"></script>
+    <script src="terminal.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
