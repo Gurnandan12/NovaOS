@@ -8,8 +8,8 @@ class WindowManager {
     this.taskbarApps = null;
   }
   init() {
-    this.container = Utils.el('windows-container');
-    this.taskbarApps = Utils.el('taskbar-apps');
+    this.container = Utils.el('window-container');
+    this.taskbarApps = Utils.el('running-apps');
     document.addEventListener('mousedown', e => {
       const win = e.target.closest('.window');
       if (win) this.focus(win.dataset.winId);
@@ -26,20 +26,27 @@ class WindowManager {
     win.dataset.appId = appId;
     win.style.cssText = `left:${x}px;top:${y}px;width:${width}px;height:${height}px;z-index:${++this.zCounter}`;
     win.innerHTML = `
-      <div class="titlebar" data-win-id="${id}">
-        <div class="titlebar-controls">
-          <button class="tb-btn tb-close" title="Close"></button>
-          <button class="tb-btn tb-min" title="Minimize"></button>
-          <button class="tb-btn tb-max" title="Maximize"></button>
+      <div class="window-header" data-win-id="${id}">
+        <div class="window-controls">
+          <button class="win-btn win-close tb-close" title="Close"></button>
+          <button class="win-btn win-min tb-min" title="Minimize"></button>
+          <button class="win-btn win-max tb-max" title="Maximize"></button>
         </div>
-        <div class="titlebar-icon">${icon}</div>
-        <div class="titlebar-title">${title}</div>
+        <div class="titlebar-icon" style="font-size: 1.1rem; display: flex; align-items: center; justify-content: center;">${icon}</div>
+        <div class="win-title">${title}</div>
       </div>
       <div class="window-body">${content}</div>
       ${!noResize ? '<div class="window-resize-handle"></div>' : ''}
     `;
     this.container.appendChild(win);
-    this.windows[id] = { el: win, title, appId, minimized: false, maximized: false, x, y, width, height, prevState: { x, y, width, height } };
+    
+    // Store window metadata with both unique id and appId
+    const winObj = { id, el: win, title, appId, minimized: false, maximized: false, x, y, width, height, prevState: { x, y, width, height } };
+    this.windows[id] = winObj;
+    if (appId) {
+      this.windows[appId] = winObj;
+    }
+    
     // Controls
     win.querySelector('.tb-close').onclick = () => this.close(id);
     win.querySelector('.tb-min').onclick = () => this.minimize(id);
@@ -53,10 +60,10 @@ class WindowManager {
     return id;
   }
   _makeDraggable(win, id) {
-    const tb = win.querySelector('.titlebar');
+    const tb = win.querySelector('.window-header');
     let dragging = false, ox = 0, oy = 0;
     tb.addEventListener('mousedown', e => {
-      if (e.target.closest('.tb-btn') || e.target.closest('.titlebar-actions') || e.target.closest('.tb-action')) return;
+      if (e.target.closest('.win-btn') || e.target.closest('.titlebar-actions') || e.target.closest('.tb-action')) return;
       const w = this.windows[id];
       if (w.maximized) return;
       dragging = true;
@@ -69,17 +76,20 @@ class WindowManager {
       if (!dragging) return;
       const w = this.windows[id];
       const nx = Utils.clamp(e.clientX - ox, 0, window.innerWidth - w.width);
-      const ny = Utils.clamp(e.clientY - oy, 0, window.innerHeight - 52 - 20);
+      const ny = Utils.clamp(e.clientY - oy, 0, window.innerHeight - 64 - 20); // 64 for taskbar-h
       win.style.left = nx + 'px'; win.style.top = ny + 'px';
       w.x = nx; w.y = ny;
       // snap indicators
       if (e.clientX < 10) win.classList.add('snap-hint-left');
       else win.classList.remove('snap-hint-left');
+      if (e.clientX > window.innerWidth - 10) win.classList.add('snap-hint-right');
+      else win.classList.remove('snap-hint-right');
     });
     document.addEventListener('mouseup', e => {
       if (!dragging) return;
       dragging = false;
       win.style.transition = '';
+      win.classList.remove('snap-hint-left', 'snap-hint-right');
       if (e.clientX < 10) this._snapLeft(id);
       else if (e.clientX > window.innerWidth - 10) this._snapRight(id);
     });
@@ -106,40 +116,49 @@ class WindowManager {
   _snapLeft(id) {
     const w = this.windows[id];
     w.prevState = { x: w.x, y: w.y, width: w.width, height: w.height };
-    const h = window.innerHeight - 52;
+    const h = window.innerHeight - 64; // 64 for taskbar-h
     w.el.style.cssText += `;left:0;top:0;width:50vw;height:${h}px;border-radius:0`;
     w.width = window.innerWidth / 2; w.height = h;
   }
   _snapRight(id) {
     const w = this.windows[id];
-    const hw = window.innerWidth / 2, h = window.innerHeight - 52;
+    const hw = window.innerWidth / 2, h = window.innerHeight - 64; // 64 for taskbar-h
     w.el.style.cssText += `;left:${hw}px;top:0;width:${hw}px;height:${h}px;border-radius:0`;
     w.width = hw; w.height = h;
   }
-  focus(id) {
-    if (!this.windows[id]) return;
-    Object.values(this.windows).forEach(w => w.el.classList.remove('focused'));
-    const w = this.windows[id];
+  focus(idOrAppId) {
+    const w = this.windows[idOrAppId];
+    if (!w) return;
+    
+    // De-duplicate windows list since some are indexed by both unique id and appId
+    const uniqueWindows = new Set(Object.values(this.windows));
+    uniqueWindows.forEach(winObj => {
+      if (winObj && winObj.el) winObj.el.classList.remove('focused');
+    });
+    
     w.el.classList.add('focused');
     w.el.style.zIndex = ++this.zCounter;
-    this.activeWin = id;
+    this.activeWin = w.id;
     this._updateTaskbar();
   }
-  minimize(id) {
-    const w = this.windows[id];
+  minimize(idOrAppId) {
+    const w = this.windows[idOrAppId];
     if (!w) return;
     w.minimized = !w.minimized;
     w.el.classList.toggle('minimized', w.minimized);
-    if (w.minimized) this.activeWin = null;
-    else this.focus(id);
+    if (w.minimized) {
+      if (this.activeWin === w.id) this.activeWin = null;
+    } else {
+      this.focus(w.id);
+    }
     this._updateTaskbar();
   }
-  toggleMaximize(id) {
-    const w = this.windows[id];
+  toggleMaximize(idOrAppId) {
+    const w = this.windows[idOrAppId];
     if (!w) return;
     if (!w.maximized) {
-      w.prevState = { x: parseInt(w.el.style.left), y: parseInt(w.el.style.top), width: w.el.offsetWidth, height: w.el.offsetHeight };
-      const h = window.innerHeight - 52;
+      w.prevState = { x: parseInt(w.el.style.left) || w.x, y: parseInt(w.el.style.top) || w.y, width: w.el.offsetWidth || w.width, height: w.el.offsetHeight || w.height };
+      const h = window.innerHeight - 64; // 64 for taskbar-h
       Object.assign(w.el.style, { left: '0', top: '0', width: '100vw', height: h + 'px', borderRadius: '0', border: 'none' });
       w.maximized = true;
     } else {
@@ -148,14 +167,21 @@ class WindowManager {
       w.maximized = false;
     }
   }
-  close(id) {
-    const w = this.windows[id];
+  close(idOrAppId) {
+    const w = this.windows[idOrAppId];
     if (!w) return;
     w.el.style.opacity = '0';
     w.el.style.transform = 'scale(0.9)';
     w.el.style.transition = 'all 0.2s ease';
-    setTimeout(() => { w.el.remove(); delete this.windows[id]; this._updateTaskbar(); }, 200);
-    if (this.activeWin === id) this.activeWin = null;
+    setTimeout(() => {
+      w.el.remove();
+      const uniqueId = w.id;
+      const appId = w.appId;
+      delete this.windows[uniqueId];
+      if (appId && this.windows[appId]) delete this.windows[appId];
+      this._updateTaskbar();
+    }, 200);
+    if (this.activeWin === w.id) this.activeWin = null;
   }
   closeByApp(appId) {
     Object.entries(this.windows).forEach(([id, w]) => { if (w.appId === appId) this.close(id); });
@@ -165,10 +191,14 @@ class WindowManager {
   }
   _addTaskbarItem(id, title, icon, appId) {
     const item = document.createElement('div');
-    item.className = 'taskbar-app';
+    item.className = 'taskbar-icon taskbar-app';
     item.dataset.winId = id;
     item.dataset.appId = appId;
-    item.innerHTML = `<div class="app-icon-small">${icon}</div><span>${title}</span>`;
+    item.title = title;
+    item.style.fontSize = '1.5rem';
+    item.style.cursor = 'pointer';
+    item.innerHTML = icon;
+    
     item.onclick = () => {
       const w = this.windows[id];
       if (!w) return;

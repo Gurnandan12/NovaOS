@@ -1331,3 +1331,30 @@ body {
 .playlist-item img { width: 40px; height: 40px; border-radius: 4px; }
 .playlist-item-title { font-size: 0.85rem; font-weight: 600; }
 .playlist-item-artist { font-size: 0.7rem; color: var(--text3); }
+
+/* ===== ADDITIONAL WINDOW STATES & POLISH ===== */
+.window.minimized {
+  opacity: 0;
+  transform: scale(0.9) translateY(100px);
+  pointer-events: none;
+}
+
+.window-resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: se-resize;
+  z-index: 1000;
+}
+
+.snap-hint-left {
+  box-shadow: -20px 0 40px var(--accent-glow) !important;
+  border-left: 3px solid var(--accent) !important;
+}
+
+.snap-hint-right {
+  box-shadow: 20px 0 40px var(--accent-glow) !important;
+  border-right: 3px solid var(--accent) !important;
+}

@@ -39,9 +39,16 @@ const AppLauncher = {
 
     open(appId, params = {}) {
         if (WM.isOpen(appId)) {
-            WM.focus(appId);
-            if (appId === 'settings' && params.tab) {
-                SettingsApp.switchTab(params.tab);
+            const w = WM.windows[appId];
+            if (w) {
+                if (w.minimized) {
+                    WM.minimize(w.id);
+                } else {
+                    WM.focus(w.id);
+                }
+                if (appId === 'settings' && params.tab) {
+                    SettingsApp.switchTab(params.tab);
+                }
             }
             return;
         }
@@ -99,7 +106,7 @@ const AppLauncher = {
         }
 
         WM.create({
-            id: appId,
+            appId: appId,
             title,
             icon,
             content,

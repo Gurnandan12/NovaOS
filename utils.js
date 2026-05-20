@@ -2,6 +2,8 @@
 const Utils = {
     generateId: () => '_' + Math.random().toString(36).substr(2, 9),
     
+    randomInt: (min, max) => Math.floor(Math.random() * (max - min)) + min,
+    
     clamp: (val, min, max) => Math.min(Math.max(val, min), max),
     
     saveLS: (key, val) => {
